@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/buzzfeed/sso/internal/pkg/sessions"
+	"github.com/buzzfeed/sso/internal/proxy/providers"
 )
 
 var (
@@ -27,6 +28,22 @@ func RunValidators(validators []Validator, session *sessions.SessionState) []err
 		if err != nil {
 			validatorErrors = append(validatorErrors, err)
 		}
+	}
+	return validatorErrors
+}
+
+// RunValidatorsWithGracePeriod is a helper function that wraps the RunValidators function,
+// checking whether returned errors state that the request is within the grace period or not.
+// Errors for requests that were within the grace period are ignored.
+func RunValidatorsWithGracePeriod(validators []Validator, session *sessions.SessionState) []error {
+	validatorErrors := make([]error, 0, len(validators))
+	for _, err := range RunValidators(validators, session) {
+		if err, ok := err.(*providers.GroupValidationError); ok {
+			if err.IsWithinGracePeriod() {
+				continue
+			}
+		}
+		validatorErrors = append(validatorErrors, err)
 	}
 	return validatorErrors
 }
