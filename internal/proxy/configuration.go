@@ -73,10 +73,11 @@ func DefaultProxyConfig() Configuration {
 		},
 		SessionConfig: SessionConfig{
 			CookieConfig: CookieConfig{
-				Name:     "_sso_proxy",
-				Expire:   168 * time.Hour,
-				Secure:   true,
-				HTTPOnly: true,
+				Name:                   "_sso_proxy",
+				Expire:                 168 * time.Hour,
+				Secure:                 true,
+				HTTPOnly:               true,
+				SkipAuthorizedUpstream: false,
 			},
 			TTLConfig: TTLConfig{
 				Lifetime:    720 * time.Hour,
@@ -244,12 +245,13 @@ func (sc SessionConfig) Validate() error {
 }
 
 type CookieConfig struct {
-	Name     string        `mapstructure:"name"`
-	Secret   string        `mapstructure:"secret"`
-	Expire   time.Duration `mapstructure:"expire"`
-	Domain   string        `mapstructure:"domain"`
-	Secure   bool          `mapstructure:"secure"`
-	HTTPOnly bool          `mapstructure:"httponly"`
+	Name                   string        `mapstructure:"name"`
+	Secret                 string        `mapstructure:"secret"`
+	Expire                 time.Duration `mapstructure:"expire"`
+	Domain                 string        `mapstructure:"domain"`
+	Secure                 bool          `mapstructure:"secure"`
+	HTTPOnly               bool          `mapstructure:"httponly"`
+	SkipAuthorizedUpstream bool          `mapstructure:"skip_authorized_upstream"`
 }
 
 func (cc CookieConfig) Validate() error {

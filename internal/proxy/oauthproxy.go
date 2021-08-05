@@ -58,10 +58,11 @@ const statusInvalidHost = 421
 
 // OAuthProxy stores all the information associated with proxying the request.
 type OAuthProxy struct {
-	cookieSecure bool
-	Validators   []validators.Validator
-	redirectURL  *url.URL // the url to receive requests at
-	templates    *template.Template
+	cookieSecure           bool
+	Validators             []validators.Validator
+	redirectURL            *url.URL // the url to receive requests at
+	templates              *template.Template
+	skipAuthorizedUpstream bool
 
 	StatsdClient *statsd.Client
 
@@ -91,6 +92,8 @@ func NewOAuthProxy(sc SessionConfig, optFuncs ...func(*OAuthProxy) error) (*OAut
 
 		redirectURL: &url.URL{Path: "/oauth2/callback"},
 		templates:   getTemplates(),
+
+		skipAuthorizedUpstream: sc.CookieConfig.SkipAuthorizedUpstream,
 	}
 
 	for _, optFunc := range optFuncs {
@@ -644,7 +647,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 	// check that the user has been authorized against the requested upstream
 	// this is primarily to combat against a user authorizing with one upstream and attempting to use
 	// the session cookie for a different upstream.
-	if req.Host != session.AuthorizedUpstream {
+	if req.Host != session.AuthorizedUpstream && !p.skipAuthorizedUpstream {
 		logger.WithProxyHost(req.Host).WithAuthorizedUpstream(session.AuthorizedUpstream).WithUser(session.Email).Warn(
 			"session authorized against different upstream; restarting authentication")
 		return ErrUnauthorizedUpstreamRequested
